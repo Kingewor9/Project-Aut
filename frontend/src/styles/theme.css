@@ -1,0 +1,109 @@
+/* ─── Automata TG Design System — CSS Custom Properties ─────────────────────
+   Telegram-native light/dark theme with DM Sans typography.
+   Colors adapt automatically to the user's Telegram theme.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Fonts */
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'DM Mono', 'Courier New', monospace;
+
+  /* Brand accent — Telegram-inspired indigo */
+  --color-accent: #5B6CF0;
+  --color-accent-hover: #4A5AE0;
+  --color-accent-subtle: rgba(91, 108, 240, 0.12);
+
+  /* Semantic status colors */
+  --color-success: #34C759;
+  --color-warning: #FF9F0A;
+  --color-danger: #FF3B30;
+
+  /* Usage progress color stops */
+  --usage-low: var(--color-success);
+  --usage-mid: var(--color-warning);
+  --usage-high: var(--color-danger);
+
+  /* Typography scale */
+  --text-xs: 0.72rem;
+  --text-sm: 0.85rem;
+  --text-base: 0.95rem;
+  --text-md: 1.05rem;
+  --text-lg: 1.2rem;
+  --text-xl: 1.45rem;
+  --text-2xl: 1.75rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Border radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 6px 24px rgba(0, 0, 0, 0.14);
+  --shadow-nav: 0 -1px 0 var(--color-border), 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 240ms ease;
+  --transition-slow: 360ms ease;
+
+  /* Bottom nav height (for content padding) */
+  --nav-height: 80px;
+  --nav-safe-area: env(safe-area-inset-bottom, 0px);
+}
+
+/* ─── Light Mode ─────────────────────────────────────────────────────────── */
+[data-theme='light'], :root {
+  --color-bg: #F2F2F7;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F8F8FA;
+  --color-surface-elevated: #FFFFFF;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-subtle: rgba(0, 0, 0, 0.05);
+
+  --color-text-primary: #0E0E13;
+  --color-text-secondary: #6B6C7E;
+  --color-text-tertiary: #AAAAB8;
+  --color-text-inverse: #FFFFFF;
+
+  --color-nav-bg: rgba(255, 255, 255, 0.88);
+  --color-badge-bg: #EEEEF3;
+  --color-badge-text: #6B6C7E;
+  --color-upgrade-bg: linear-gradient(135deg, #5B6CF0 0%, #7C5CF0 100%);
+}
+
+/* ─── Dark Mode ──────────────────────────────────────────────────────────── */
+[data-theme='dark'] {
+  --color-bg: #0E0F14;
+  --color-surface: #1A1B22;
+  --color-surface-2: #22232D;
+  --color-surface-elevated: #252630;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+
+  --color-text-primary: #F0F0F5;
+  --color-text-secondary: #8A8BA0;
+  --color-text-tertiary: #55566A;
+  --color-text-inverse: #0E0E13;
+
+  --color-nav-bg: rgba(20, 21, 28, 0.92);
+  --color-badge-bg: rgba(255, 255, 255, 0.08);
+  --color-badge-text: #8A8BA0;
+  --color-upgrade-bg: linear-gradient(135deg, #5B6CF0 0%, #7C5CF0 100%);
+
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.28);
+  --shadow-card-hover: 0 6px 24px rgba(0, 0, 0, 0.38);
+}

@@ -1,0 +1,27 @@
+.env
+node_modules/
+
+# Local environment files (keep example templates tracked)
+.env.*
+!.env.example
+
+# Frontend build output
+frontend/dist/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Test and runtime output
+.coverage
+htmlcov/
+*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
