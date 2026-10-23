@@ -1,4 +1,5 @@
 import React from 'react';
+import { resolveApiAssetUrl } from '@/config/constants';
 
 interface AvatarProps {
   src?: string | null;
@@ -54,7 +55,7 @@ export function Avatar({ src, name, size = 40, className = '' }: AvatarProps) {
         initials
       ) : (
         <img
-          src={src!}
+          src={resolveApiAssetUrl(src!)}
           alt={name ?? 'Avatar'}
           width={size}
           height={size}

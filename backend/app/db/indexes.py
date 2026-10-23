@@ -46,4 +46,11 @@ async def create_indexes() -> None:
         IndexModel([("user_id", ASCENDING)]),
     ])
 
+    # Scheduled slots are unique so multiple scheduler workers cannot create
+    # duplicate daily posts for the same channel and posting time.
+    await db.scheduled_posts.create_indexes([
+        IndexModel([("channel_id", ASCENDING), ("scheduled_for", ASCENDING)], unique=True),
+        IndexModel([("user_id", ASCENDING), ("status", ASCENDING), ("scheduled_for", ASCENDING)]),
+    ])
+
     logger.info("MongoDB indexes created/verified.")

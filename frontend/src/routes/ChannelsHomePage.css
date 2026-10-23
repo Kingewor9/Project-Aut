@@ -32,6 +32,111 @@
 .channels-home__body {
   display: flex;
   flex-direction: column;
+  gap: var(--space-5);
+}
+
+.pending-posts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.pending-posts__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.pending-posts__heading h2 {
+  margin: 5px 0 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-lg);
+}
+
+.pending-posts__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.pending-posts__count {
+  display: grid;
+  min-width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.pending-posts__empty, .pending-posts__error {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.pending-posts__error { color: var(--color-danger, #b42318); }
+
+.pending-post {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  animation: fadeIn .25s ease both;
+}
+
+.pending-post__meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+.pending-post__meta time {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+}
+
+.pending-post__content, .pending-post__poll {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pending-post__poll ol { margin-bottom: 0; padding-left: 22px; }
+.pending-post__poll li { padding: 3px 0; }
+.pending-post__poll small { display: inline-block; margin-top: var(--space-2); color: var(--color-success); font-weight: 700; }
+
+.pending-post__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 /* Loading skeletons */

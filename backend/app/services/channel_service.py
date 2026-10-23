@@ -196,7 +196,11 @@ async def activate_channel(
     brain = channel.brain
     if not brain.niches or not brain.topics or not brain.audience.description:
         raise ConflictException("Complete channel identity before activating AI")
-    if not brain.writing_dna.tone and not any(post.strip() for post in brain.writing_dna.sample_posts):
+    if (
+        not brain.writing_dna.tone
+        and not any(post.strip() for post in brain.writing_dna.sample_posts)
+        and not brain.writing_dna.sample_polls
+    ):
         raise ConflictException("Teach your AI a writing style before activating")
 
     is_bot_admin = await telegram_bot_service.check_bot_admin(channel.telegram_channel_id)

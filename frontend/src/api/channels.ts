@@ -9,6 +9,7 @@ import type {
   CTAConfig,
   ProductOffer,
   WritingDNA,
+  ScheduledPost,
   TestGenerationResponse,
   StyleAnalysisResponse,
 } from '@/types/channel';
@@ -64,4 +65,15 @@ export const channelsApi = {
 
   delete: (id: string): Promise<void> =>
     client.delete(`/channels/${id}`).then(() => undefined),
+};
+
+export const postsApi = {
+  pending: (): Promise<ScheduledPost[]> =>
+    client.get<ScheduledPost[]>('/posts/pending').then((r) => r.data),
+
+  approve: (postId: string): Promise<ScheduledPost> =>
+    client.post<ScheduledPost>(`/posts/${postId}/approve`).then((r) => r.data),
+
+  decline: (postId: string): Promise<ScheduledPost> =>
+    client.post<ScheduledPost>(`/posts/${postId}/decline`).then((r) => r.data),
 };

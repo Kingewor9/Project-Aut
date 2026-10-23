@@ -15,7 +15,7 @@ from app.db.mongo import close_client
 from app.scheduling.scheduler import start_scheduler, stop_scheduler
 
 # Routers
-from app.api import users, channels, subscriptions, config as config_router
+from app.api import users, channels, posts, subscriptions, config as config_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,6 +56,7 @@ API_PREFIX = "/api/v1"
 
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(channels.router, prefix=API_PREFIX)
+app.include_router(posts.router, prefix=API_PREFIX)
 app.include_router(subscriptions.router, prefix=API_PREFIX)
 app.include_router(config_router.router, prefix=API_PREFIX)
 

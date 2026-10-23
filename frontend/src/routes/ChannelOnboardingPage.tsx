@@ -9,7 +9,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import type {
   Channel, ChannelAudience, ChannelRules, ChannelSchedule, CTAConfig,
-  ProductOffer, WritingDNA,
+  ProductOffer, QuizPollExample, WritingDNA,
 } from '@/types/channel';
 import { hapticImpact, hapticNotification, openInvoice } from '@/lib/telegram';
 import './ChannelOnboardingPage.css';
@@ -25,7 +25,11 @@ const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const emptyAudience: ChannelAudience = { interests: [] };
 const emptyRules: ChannelRules = { always_do: [], never_do: [], forbidden_topics: [], forbidden_words: [] };
 const emptySchedule: ChannelSchedule = { timezone: 'UTC', posts_per_day: 1, posting_times: ['09:00'], active_days: DAYS, daily_times: {} };
-const emptyWritingDNA: WritingDNA = { mode: 'manual', tone: [], personality: [], formatting: [], sample_posts: [], style_analysis: {} };
+const emptyWritingDNA: WritingDNA = { mode: 'manual', content_style: 'text_only', tone: [], personality: [], formatting: [], sample_posts: [], sample_polls: [], style_analysis: {} };
+
+function createEmptyQuizPoll(): QuizPollExample {
+  return { question: '', options: ['', ''], correct_option_id: 0 };
+}
 
 function toggleValue(values: string[], value: string) {
   return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
@@ -83,7 +87,10 @@ export default function ChannelOnboardingPage() {
           frequency: savedBrain.frequency ?? 'daily',
           schedule: result.schedule ?? emptySchedule,
         });
-        setBrain({ writing_dna: savedBrain.writing_dna ?? emptyWritingDNA, content_types: savedBrain.content_types ?? ['Educational', 'Tips', 'Engagement'] });
+        setBrain({
+          writing_dna: { ...emptyWritingDNA, ...savedBrain.writing_dna, sample_polls: savedBrain.writing_dna?.sample_polls ?? [] },
+          content_types: savedBrain.content_types ?? ['Educational', 'Tips', 'Engagement'],
+        });
         setCta({ enabled: savedBrain.cta_enabled ?? false, products: savedBrain.products ?? [], ctas: savedBrain.ctas ?? [], promotion_style: savedBrain.promotion_style ?? 'Soft sell', max_promotions_per_week: savedBrain.max_promotions_per_week ?? 2 });
         setPublishMode(result.publish_mode);
       })
@@ -110,9 +117,23 @@ export default function ChannelOnboardingPage() {
       } else if (step === 1) {
         const writingDNA = brain.writing_dna;
         const sampleCount = writingDNA.sample_posts.filter((sample) => sample.trim()).length;
-        if (writingDNA.mode === 'samples' && (sampleCount < 3 || !['analyzed', 'approved'].includes(writingDNA.style_analysis_status ?? ''))) {
-          setError('Analyze at least 3 real posts and review the voice profile before continuing.');
-          return;
+        if (writingDNA.mode === 'samples') {
+          if (writingDNA.content_style === 'quiz_polls') {
+            const completePolls = (writingDNA.sample_polls ?? []).filter((poll) =>
+              poll.question.trim()
+              && poll.options.length >= 2
+              && poll.options.every((option) => option.trim())
+              && poll.correct_option_id >= 0
+              && poll.correct_option_id < poll.options.length
+            );
+            if (completePolls.length < 3) {
+              setError('Complete at least 3 quiz polls, including each question, its options, and the correct answer.');
+              return;
+            }
+          } else if (sampleCount < 3 || !['analyzed', 'approved'].includes(writingDNA.style_analysis_status ?? '')) {
+            setError('Analyze at least 3 real posts and review the voice profile before continuing.');
+            return;
+          }
         }
         if (writingDNA.mode === 'manual' && !writingDNA.tone.length) {
           setError('Choose a tone or add writing samples so your AI has a clear voice.');
@@ -185,7 +206,7 @@ export default function ChannelOnboardingPage() {
   };
 
   const analyzeStyle = async () => {
-    if (!id) return;
+    if (!id || brain.writing_dna.content_style === 'quiz_polls') return;
     const samples = brain.writing_dna.sample_posts.filter((sample) => sample.trim());
     if (samples.length < 3) {
       setError('Add at least 3 real posts before analyzing your writing style.');
@@ -284,7 +305,7 @@ function BrainStepWithAnalysis({ brain, updateDNA, setBrain, analyzeStyle, isAna
   const dna = brain.writing_dna;
   return <>
     <BrainStep brain={brain} updateDNA={updateDNA} setBrain={setBrain} />
-    {dna.mode === 'samples' && <section className="style-analysis-panel">
+    {dna.mode === 'samples' && dna.content_style !== 'quiz_polls' && <section className="style-analysis-panel">
       <div className="style-analysis-panel__heading"><div><span className="eyebrow">Voice profile</span><h2>Analyze my posts</h2><p>We will turn the patterns in your examples into direct writing instructions. You can edit every result before saving.</p></div><Sparkles size={22} /></div>
       <div className="credit-actions">
         <Button variant="secondary" isLoading={isAnalyzingStyle} onClick={() => void analyzeStyle()} disabled={remainingAnalyses === 0} leftIcon={<Sparkles size={16} />}>Analyze my posts</Button>
@@ -308,7 +329,161 @@ function BrainStepWithAnalysis({ brain, updateDNA, setBrain, analyzeStyle, isAna
 
 function BrainStep({ brain, updateDNA, setBrain }: { brain: { writing_dna: WritingDNA; content_types: string[] }; updateDNA: (patch: Partial<WritingDNA>) => void; setBrain: React.Dispatch<React.SetStateAction<{ writing_dna: WritingDNA; content_types: string[] }>> }) {
   const dna = brain.writing_dna;
-  return <section className="onboarding-section"><div className="section-intro"><span className="eyebrow">Part B</span><h1>Teach your AI how to sound</h1><p>Build a writing style manually, or show the AI three to five examples of your posts.</p></div><div className="mode-switch"><button className={dna.mode === 'manual' ? 'is-selected' : ''} onClick={() => updateDNA({ mode: 'manual' })}>Build manually</button><button className={dna.mode === 'samples' ? 'is-selected' : ''} onClick={() => updateDNA({ mode: 'samples' })}>Learn from my posts</button></div>{dna.mode === 'manual' ? <><FieldGroup title="Tone and personality"><div className="chip-grid">{TONES.map((item) => <Chip key={item} label={item} selected={dna.tone.includes(item)} onClick={() => updateDNA({ tone: toggleValue(dna.tone, item) })} />)}</div></FieldGroup><FieldGroup title="Writing style"><div className="chip-grid">{WRITING_STYLES.map((item) => <Chip key={item} label={item} selected={dna.personality.includes(item)} onClick={() => updateDNA({ personality: toggleValue(dna.personality, item) })} />)}</div></FieldGroup></> : <FieldGroup title="Show us how you write" hint="Paste 3–5 real posts. The analysis will become editable Writing DNA."><div className="sample-list">{[0, 1, 2, 3, 4].map((index) => <textarea key={index} value={dna.sample_posts[index] ?? ''} onChange={(e) => { const samples = [...dna.sample_posts]; samples[index] = e.target.value; updateDNA({ sample_posts: samples }); }} placeholder={`Post example ${index + 1}${index > 2 ? ' (optional)' : ''}`} />)}</div></FieldGroup>}<FieldGroup title="Formatting and feel"><div className="chip-grid">{FORMATTING.map((item) => <Chip key={item} label={item} selected={dna.formatting.includes(item)} onClick={() => updateDNA({ formatting: toggleValue(dna.formatting, item) })} />)}</div><div className="form-grid"><label>Emoji usage<select value={dna.emoji_usage ?? ''} onChange={(e) => updateDNA({ emoji_usage: e.target.value })}><option value="">Choose</option><option>None</option><option>Minimal</option><option>Moderate</option><option>Heavy</option></select></label><label>Post length<select value={dna.post_length ?? ''} onChange={(e) => updateDNA({ post_length: e.target.value })}><option value="">Choose</option><option>Short</option><option>Medium</option><option>Long</option></select></label></div></FieldGroup><FieldGroup title="Content types"><div className="chip-grid">{CONTENT_TYPES.map((item) => <Chip key={item} label={item} selected={brain.content_types.includes(item)} onClick={() => setBrain((current) => ({ ...current, content_types: toggleValue(current.content_types, item) }))} />)}</div></FieldGroup><FieldGroup title="Advanced instructions (optional)"><textarea value={dna.advanced_instructions ?? ''} onChange={(e) => updateDNA({ advanced_instructions: e.target.value })} placeholder="Any extra guidance for how your AI should write." /></FieldGroup></section>;
+  const updatePoll = (pollIndex: number, update: (poll: QuizPollExample) => QuizPollExample) => {
+    setBrain((current) => ({
+      ...current,
+      writing_dna: {
+        ...current.writing_dna,
+        sample_polls: (current.writing_dna.sample_polls ?? []).map((poll, index) =>
+          index === pollIndex ? update(poll) : poll
+        ),
+      },
+    }));
+  };
+
+  const pollSamples = dna.sample_polls ?? [];
+  const addPoll = () => updateDNA({ sample_polls: [...pollSamples, createEmptyQuizPoll()] });
+  const removePoll = (pollIndex: number) => updateDNA({
+    sample_polls: pollSamples.filter((_, index) => index !== pollIndex),
+  });
+
+  return <section className="onboarding-section">
+    <div className="section-intro">
+      <span className="eyebrow">Part B</span>
+      <h1>Teach your AI how to sound</h1>
+      <p>Build a writing style manually, or teach it from examples of the content you publish.</p>
+    </div>
+    <div className="mode-switch">
+      <button type="button" className={dna.mode === 'manual' ? 'is-selected' : ''} onClick={() => updateDNA({ mode: 'manual' })}>Build manually</button>
+      <button type="button" className={dna.mode === 'samples' ? 'is-selected' : ''} onClick={() => updateDNA({ mode: 'samples' })}>Learn from my content</button>
+    </div>
+    {dna.mode === 'manual' ? <>
+      <FieldGroup title="Tone and personality">
+        <div className="chip-grid">{TONES.map((item) => <Chip key={item} label={item} selected={dna.tone.includes(item)} onClick={() => updateDNA({ tone: toggleValue(dna.tone, item) })} />)}</div>
+      </FieldGroup>
+      <FieldGroup title="Writing style">
+        <div className="chip-grid">{WRITING_STYLES.map((item) => <Chip key={item} label={item} selected={dna.personality.includes(item)} onClick={() => updateDNA({ personality: toggleValue(dna.personality, item) })} />)}</div>
+      </FieldGroup>
+    </> : <>
+      <FieldGroup title="Select content style" hint="Choose the kind of examples you want Automata to learn from.">
+        <select
+          aria-label="Training content style"
+          value={dna.content_style ?? 'text_only'}
+          onChange={(event) => {
+            const contentStyle = event.target.value as WritingDNA['content_style'];
+            updateDNA({
+              content_style: contentStyle,
+              style_analysis_status: undefined,
+              ...(contentStyle === 'quiz_polls' && pollSamples.length === 0
+                ? { sample_polls: [createEmptyQuizPoll(), createEmptyQuizPoll(), createEmptyQuizPoll()] }
+                : {}),
+            });
+          }}
+        >
+          <option value="text_only">Text only</option>
+          <option value="quiz_polls">Quiz polls</option>
+        </select>
+      </FieldGroup>
+      {dna.content_style === 'quiz_polls' ? (
+        <FieldGroup title="Quiz poll examples" hint="Add at least 3 examples. Choose the correct answer for each one.">
+          <div className="quiz-poll-list">
+            {pollSamples.map((poll, pollIndex) => (
+              <article className="quiz-poll-card" key={pollIndex}>
+                <div className="quiz-poll-card__heading">
+                  <strong>Quiz poll {pollIndex + 1}</strong>
+                  {pollSamples.length > 3 && (
+                    <button type="button" aria-label={`Remove quiz poll ${pollIndex + 1}`} onClick={() => removePoll(pollIndex)}>
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </div>
+                <label>
+                  Question
+                  <textarea
+                    value={poll.question}
+                    onChange={(event) => updatePoll(pollIndex, (current) => ({ ...current, question: event.target.value }))}
+                    placeholder="Write your quiz question"
+                  />
+                </label>
+                <fieldset className="quiz-poll-options">
+                  <legend>Answer options — select the correct answer</legend>
+                  {poll.options.map((option, optionIndex) => (
+                    <div className="quiz-poll-option" key={optionIndex}>
+                      <label>
+                        <input
+                          type="radio"
+                          name={`quiz-poll-${pollIndex}-correct`}
+                          checked={poll.correct_option_id === optionIndex}
+                          onChange={() => updatePoll(pollIndex, (current) => ({ ...current, correct_option_id: optionIndex }))}
+                        />
+                        <span>Correct</span>
+                      </label>
+                      <input
+                        value={option}
+                        aria-label={`Quiz poll ${pollIndex + 1} option ${optionIndex + 1}`}
+                        onChange={(event) => updatePoll(pollIndex, (current) => ({
+                          ...current,
+                          options: current.options.map((item, index) => index === optionIndex ? event.target.value : item),
+                        }))}
+                        placeholder={`Option ${optionIndex + 1}`}
+                      />
+                      {poll.options.length > 2 && (
+                        <button
+                          type="button"
+                          aria-label={`Remove option ${optionIndex + 1} from quiz poll ${pollIndex + 1}`}
+                          onClick={() => updatePoll(pollIndex, (current) => ({
+                            ...current,
+                            options: current.options.filter((_, index) => index !== optionIndex),
+                            correct_option_id: current.correct_option_id === optionIndex
+                              ? 0
+                              : current.correct_option_id > optionIndex
+                                ? current.correct_option_id - 1
+                                : current.correct_option_id,
+                          }))}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    className="quiz-poll-add-option"
+                    type="button"
+                    disabled={poll.options.length >= 10}
+                    onClick={() => updatePoll(pollIndex, (current) => ({ ...current, options: [...current.options, ''] }))}
+                  >
+                    <Plus size={14} /> Add answer option
+                  </button>
+                </fieldset>
+              </article>
+            ))}
+          </div>
+          {pollSamples.length < 5 && (
+            <button className="quiz-poll-add" type="button" onClick={addPoll}>
+              <Plus size={16} /> Add quiz poll
+            </button>
+          )}
+        </FieldGroup>
+      ) : (
+        <FieldGroup title="Show us how you write" hint="Paste 3–5 real posts. The analysis will become editable Writing DNA.">
+          <div className="sample-list">{[0, 1, 2, 3, 4].map((index) => <textarea key={index} value={dna.sample_posts[index] ?? ''} onChange={(event) => { const samples = [...dna.sample_posts]; samples[index] = event.target.value; updateDNA({ sample_posts: samples }); }} placeholder={`Post example ${index + 1}${index > 2 ? ' (optional)' : ''}`} />)}</div>
+        </FieldGroup>
+      )}
+    </>}
+    <FieldGroup title="Formatting and feel">
+      <div className="chip-grid">{FORMATTING.map((item) => <Chip key={item} label={item} selected={dna.formatting.includes(item)} onClick={() => updateDNA({ formatting: toggleValue(dna.formatting, item) })} />)}</div>
+      <div className="form-grid">
+        <label>Emoji usage<select value={dna.emoji_usage ?? ''} onChange={(event) => updateDNA({ emoji_usage: event.target.value })}><option value="">Choose</option><option>None</option><option>Minimal</option><option>Moderate</option><option>Heavy</option></select></label>
+        <label>Post length<select value={dna.post_length ?? ''} onChange={(event) => updateDNA({ post_length: event.target.value })}><option value="">Choose</option><option>Short</option><option>Medium</option><option>Long</option></select></label>
+      </div>
+    </FieldGroup>
+    <FieldGroup title="Content types">
+      <div className="chip-grid">{CONTENT_TYPES.map((item) => <Chip key={item} label={item} selected={brain.content_types.includes(item)} onClick={() => setBrain((current) => ({ ...current, content_types: toggleValue(current.content_types, item) }))} />)}</div>
+    </FieldGroup>
+    <FieldGroup title="Advanced instructions (optional)">
+      <textarea value={dna.advanced_instructions ?? ''} onChange={(event) => updateDNA({ advanced_instructions: event.target.value })} placeholder="Any extra guidance for how your AI should write." />
+    </FieldGroup>
+  </section>;
 }
 
 function CtaStep({ cta, setCta }: { cta: { enabled: boolean; products: ProductOffer[]; ctas: CTAConfig[]; promotion_style: string; max_promotions_per_week: number }; setCta: React.Dispatch<React.SetStateAction<{ enabled: boolean; products: ProductOffer[]; ctas: CTAConfig[]; promotion_style: string; max_promotions_per_week: number }>> }) {

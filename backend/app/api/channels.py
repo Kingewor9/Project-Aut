@@ -29,7 +29,7 @@ from app.schemas.channel import (
 from app.services import channel_service, usage_service
 from app.services import telegram_bot_service
 from app.services.ai.base import GenerationRequest
-from app.services.ai.prompt_builder import build_style_analysis_prompt
+from app.services.ai.prompt_builder import build_style_analysis_prompt, writing_dna_instructions
 from app.services.subscription_service import get_user_plan
 from app.config.settings import settings
 
@@ -284,27 +284,7 @@ async def test_generation(
 
 
 def _writing_dna_instructions(dna, legacy_personality: str | None = None) -> str:
-    """Turn structured Writing DNA into explicit instructions for post generation."""
-    analysis = "\n".join(
-        f"- {key.replace('_', ' ').title()}: {value}"
-        for key, value in dna.style_analysis.items()
-        if value
-    )
-    return "\n".join(filter(None, [
-        f"Tone: {', '.join(dna.tone)}" if dna.tone else None,
-        f"Personality: {', '.join(dna.personality)}" if dna.personality else None,
-        f"Vocabulary: {dna.vocabulary}" if dna.vocabulary else None,
-        f"Sentence style: {dna.sentence_style}" if dna.sentence_style else None,
-        f"Paragraph spacing: {dna.paragraph_structure}" if dna.paragraph_structure else None,
-        f"Post length: {dna.post_length or dna.average_post_length}" if (dna.post_length or dna.average_post_length) else None,
-        f"Hooks: {dna.hook_style}" if dna.hook_style else None,
-        f"Formatting: {', '.join(dna.formatting)}" if dna.formatting else None,
-        f"Emoji usage: {dna.emoji_usage}" if dna.emoji_usage else None,
-        f"CTA style: {dna.cta_style}" if dna.cta_style else None,
-        f"Observed writing profile:\n{analysis}" if analysis else None,
-        dna.advanced_instructions,
-        legacy_personality,
-    ])) or "Write clearly and conversationally."
+    return writing_dna_instructions(dna, legacy_personality)
 
 
 @router.post("/{channel_id}/onboarding/test-generation/feedback", status_code=204)

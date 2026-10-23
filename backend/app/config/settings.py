@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # Telegram
     telegram_bot_token: str = ""
     telegram_webhook_secret: str = ""
+    telegram_mini_app_url: str = ""
     telegram_support_username: str = "automata_support"
     telegram_announce_channel: str = "https://t.me/automata_tg"
 

@@ -33,13 +33,17 @@ async def send_message(
     text: str,
     parse_mode: str = "HTML",
     disable_web_page_preview: bool = True,
+    reply_markup: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return await _call("sendMessage", {
+    payload: dict[str, Any] = {
         "chat_id": chat_id,
         "text": text,
         "parse_mode": parse_mode,
         "disable_web_page_preview": disable_web_page_preview,
-    })
+    }
+    if reply_markup is not None:
+        payload["reply_markup"] = reply_markup
+    return await _call("sendMessage", payload)
 
 
 async def create_stars_invoice_link(
@@ -108,12 +112,16 @@ async def publish_to_channel(
             payload["correct_option_id"] = poll.correct_option_id
             if poll.explanation:
                 payload["explanation"] = poll.explanation
-        return await _call("sendPoll", payload)
-    return await _call("sendMessage", {
-        "chat_id": channel_id,
-        "text": text,
-        "parse_mode": parse_mode,
-    })
+        result = await _call("sendPoll", payload)
+    else:
+        result = await _call("sendMessage", {
+            "chat_id": channel_id,
+            "text": text,
+            "parse_mode": parse_mode,
+        })
+    if not result.get("ok"):
+        raise RuntimeError(f"Telegram could not publish the post: {result.get('description', 'unknown error')}")
+    return result
 
 
 async def get_chat(channel_id: str) -> Optional[dict[str, Any]]:

@@ -43,6 +43,7 @@ export interface ChannelRules {
 
 export interface WritingDNA {
   mode: 'manual' | 'samples';
+  content_style?: 'text_only' | 'quiz_polls';
   tone: string[];
   personality: string[];
   vocabulary?: string;
@@ -56,8 +57,15 @@ export interface WritingDNA {
   cta_style?: string;
   advanced_instructions?: string;
   sample_posts: string[];
+  sample_polls?: QuizPollExample[];
   style_analysis: Record<string, unknown>;
   style_analysis_status?: string;
+}
+
+export interface QuizPollExample {
+  question: string;
+  options: string[];
+  correct_option_id: number;
 }
 
 export interface ProductOffer {
@@ -134,4 +142,22 @@ export interface ChannelResolveResponse {
   username?: string;
   name: string;
   photo_url?: string;
+}
+
+export interface ScheduledPost {
+  id: string;
+  channel_id: string;
+  channel_name: string;
+  content: string;
+  poll?: {
+    question: string;
+    options: string[];
+    poll_type: string;
+    correct_option_id?: number | null;
+    explanation?: string | null;
+  } | null;
+  status: 'pending' | 'published' | 'rejected' | 'generating' | 'publishing' | 'failed';
+  scheduled_for: string;
+  created_at: string;
+  published_at?: string | null;
 }

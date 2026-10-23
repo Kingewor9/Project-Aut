@@ -7,11 +7,11 @@ A user may have many channels (limited by plan).
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 from enum import Enum
 
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.user import PyObjectId
 
@@ -30,6 +30,22 @@ class AutomationStatus(str, Enum):
 class WritingMode(str, Enum):
     MANUAL = "manual"
     SAMPLES = "samples"
+
+
+class QuizPollExample(BaseModel):
+    question: str
+    options: list[str] = Field(min_length=2, max_length=10)
+    correct_option_id: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_quiz_poll(self) -> "QuizPollExample":
+        if not self.question.strip():
+            raise ValueError("Quiz poll questions cannot be blank")
+        if any(not option.strip() for option in self.options):
+            raise ValueError("Quiz poll options cannot be blank")
+        if self.correct_option_id >= len(self.options):
+            raise ValueError("The correct answer must match one of the options")
+        return self
 
 
 class ChannelAudience(BaseModel):
@@ -51,6 +67,7 @@ class ChannelRules(BaseModel):
 
 class WritingDNA(BaseModel):
     mode: WritingMode = WritingMode.MANUAL
+    content_style: Literal["text_only", "quiz_polls"] = "text_only"
     tone: list[str] = Field(default_factory=list)
     personality: list[str] = Field(default_factory=list)
     vocabulary: Optional[str] = None
@@ -64,6 +81,7 @@ class WritingDNA(BaseModel):
     cta_style: Optional[str] = None
     advanced_instructions: Optional[str] = None
     sample_posts: list[str] = Field(default_factory=list)
+    sample_polls: list[QuizPollExample] = Field(default_factory=list)
     style_analysis: dict[str, Any] = Field(default_factory=dict)
     style_analysis_status: Optional[str] = None
 

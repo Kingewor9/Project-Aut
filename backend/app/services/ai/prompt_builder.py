@@ -68,6 +68,39 @@ Return ONLY valid JSON. Do not use Markdown fences. Use exactly this shape:
 {examples}"""
 
 
+def writing_dna_instructions(dna, legacy_personality: str | None = None) -> str:
+    """Turn structured Writing DNA into explicit instructions for post generation."""
+    analysis = "\n".join(
+        f"- {key.replace('_', ' ').title()}: {value}"
+        for key, value in dna.style_analysis.items()
+        if value
+    )
+    poll_examples = "\n\n".join(
+        f"Question: {poll.question}\n"
+        + "\n".join(
+            f"{'[CORRECT] ' if index == poll.correct_option_id else ''}{option}"
+            for index, option in enumerate(poll.options)
+        )
+        for poll in dna.sample_polls
+    )
+    return "\n".join(filter(None, [
+        f"Tone: {', '.join(dna.tone)}" if dna.tone else None,
+        f"Personality: {', '.join(dna.personality)}" if dna.personality else None,
+        f"Vocabulary: {dna.vocabulary}" if dna.vocabulary else None,
+        f"Sentence style: {dna.sentence_style}" if dna.sentence_style else None,
+        f"Paragraph spacing: {dna.paragraph_structure}" if dna.paragraph_structure else None,
+        f"Post length: {dna.post_length or dna.average_post_length}" if (dna.post_length or dna.average_post_length) else None,
+        f"Hooks: {dna.hook_style}" if dna.hook_style else None,
+        f"Formatting: {', '.join(dna.formatting)}" if dna.formatting else None,
+        f"Emoji usage: {dna.emoji_usage}" if dna.emoji_usage else None,
+        f"CTA style: {dna.cta_style}" if dna.cta_style else None,
+        f"Observed writing profile:\n{analysis}" if analysis else None,
+        f"Quiz poll examples to imitate:\n{poll_examples}" if poll_examples else None,
+        dna.advanced_instructions,
+        legacy_personality,
+    ])) or "Write clearly and conversationally."
+
+
 def build_prompt(req: GenerationRequest) -> str:
     """Build the full system + user prompt for a Telegram post generation."""
 
